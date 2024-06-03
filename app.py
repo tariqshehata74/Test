@@ -10,8 +10,8 @@ import pandas as pd
 import difflib
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
+from scipy.sparse import csr_matrix  # Add scipy sparse matrix
 import os
-
 
 app = Flask(__name__)
 
@@ -24,7 +24,12 @@ for feature in selected_features:
 combined_features = df['title'] + ' ' + df['categories'] + ' ' + df['authors'] + ' ' + f"{df['published_year']}"
 vectorizer = TfidfVectorizer()
 feature_vectors = vectorizer.fit_transform(combined_features)
-similarity = cosine_similarity(feature_vectors, feature_vectors)
+
+# Convert TF-IDF vectors to sparse matrix
+feature_vectors_sparse = csr_matrix(feature_vectors)  # Convert to sparse matrix
+
+# Cosine Similarity
+similarity = cosine_similarity(feature_vectors_sparse, feature_vectors_sparse)
 
 # Endpoint for recommending books
 @app.route('/recommend', methods=['GET', 'POST'])
@@ -57,12 +62,7 @@ def recommend_books():
     
     return jsonify({'recommended_books': recommended_books}), 200
 
-
-
-
 if __name__ == "__main__":
     port = int(os.environ.get('PORT', 5000))
     app.run(host="0.0.0.0", port=5000)
-
-
 
